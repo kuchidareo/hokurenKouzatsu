@@ -22,20 +22,33 @@ class Application(tk.Frame):
         self.initImagePlace()
         self.autoSetInput = 6
 
+        self.imageWidth = 0
+        self.imageHeight = 0
+
+        self.panelHoriSet = 3
+        self.panelVerSet = 2
+        self.panelXPadding = 200
+        self.panelYPadding = 180
+
         self.fourSortedDir = ""
         self.sixSortedDir = ""
+        self.panelDir = ""
 
         self.initFrameAndButtonSet()
 
     def makeDir(self, dirPath):
         self.fourSortedDir = dirPath.parent / "MIJ-15(4枚整頓版)"
         self.sixSortedDir = dirPath.parent / "MIJ-15(6枚整頓版)"
+        self.panelDir = dirPath.parent / "パネル画像"
 
         if not self.fourSortedDir.exists():
             self.fourSortedDir.mkdir()
 
         if not self.sixSortedDir.exists():
             self.sixSortedDir.mkdir()
+
+        if not self.panelDir.exists():
+            self.panelDir.mkdir()
 
     def initFrameAndButtonSet(self):
         self.imageFrame = tk.Frame(
@@ -145,7 +158,7 @@ class Application(tk.Frame):
         self.sortByIndivNumber(dPathList)
     
 
-    def sortByIndivNumber(self, dPathList):           
+    def sortByIndivNumber(self, dPathList):
         # WindowsPath('C:/Users/user/Downloads/AmazonPhotos (1)/
         # 20220217102111_
         # 2511447117498112202153101002440700201351761220019_
@@ -159,6 +172,7 @@ class Application(tk.Frame):
                 carcassNum = path.stem.split("_")[2]
 
                 tempList.append([path, date, indivNum, carcassNum])
+        tempList = sorted(tempList, key=lambda x: x[3]) # 枝肉番号順にソートしておく
 
         flagIndexList = []
         for i, temp in enumerate(tempList):
@@ -210,17 +224,21 @@ class Application(tk.Frame):
         horiSet = 4
         verSet = 2
 
-        imageWidth = int(self.winWidth * 4 / (5 * horiSet) - xPadding)
-        imageHeight = int(19 * imageWidth / 22)
+        displayImageWidth = int(self.winWidth * 4 / (5 * horiSet) - xPadding)
+        displayImageHeight = int(19 * displayImageWidth / 22)
 
-        self.initImageSet(horiSet, verSet, xPadding, yPadding, imageWidth, imageHeight, len(dirPath))
+        img = Image.open(str(dirPath[0][0]))
+        self.imageWidth = img.width
+        self.imageHeight = img.height
+
+        self.initImageSet(horiSet, verSet, xPadding, yPadding, displayImageWidth, displayImageHeight, len(dirPath))
 
         for i in range(verSet):
             for j in range(horiSet):
                 if horiSet*i+j >= len(dirPath):
                     break
                 img = Image.open(str(dirPath[horiSet*i+j][0]))
-                img = img.resize((imageWidth, imageHeight))
+                img = img.resize((displayImageWidth, displayImageHeight))
                 self.PILimageList.append(img)
 
                 img = ImageTk.PhotoImage(img)
@@ -283,6 +301,7 @@ class Application(tk.Frame):
 
     def doneButtonClicked(self):
         self.renamePaths()
+        self.createPanelImage()
         self.processCount += 1
         self.processLabel.configure(text = str(self.processCount + 1) + " / " + str(len(self.dirPathList)))
         self.carcassLabel.configure(text = str(self.dirPathList[self.processCount][0][3]))
@@ -296,6 +315,29 @@ class Application(tk.Frame):
             return
         
         self.imageSet(self.dirPathList[self.processCount], True)
+
+    def createPanelImage(self):
+        panelWidth = self.imageWidth * self.panelHoriSet + self.panelXPadding * (self.panelHoriSet+1)
+        panelHeight = self.imageHeight * self.panelVerSet + self.panelYPadding * (self.panelVerSet+1)
+        dst = Image.new('RGB', (panelWidth, panelHeight), color="white")
+
+        for path in self.clickOrderPathList:
+            oriPath = path[0][0]
+            order = path[2] - 1 # index(0から開始)に変更
+            img = Image.open(oriPath)
+            ver = order // self.panelHoriSet
+            hori = order % self.panelHoriSet
+            dst.paste(img, (img.width*hori + self.panelXPadding*(hori+1), img.height*ver + self.panelYPadding*(ver+1)))
+
+        ushi = self.clickOrderPathList[0][0]
+        date = ushi[1]
+        carcassNumber = ushi[3]
+
+        draw = ImageDraw.Draw(dst)
+        font = ImageFont.truetype("arial.ttf", 180)
+        draw.text((self.imageWidth*(3/2) + self.panelXPadding - 90, self.imageHeight + self.panelYPadding), str(carcassNumber), (0, 0, 0), font=font)
+        
+        dst.save(str(self.panelDir) + "\\" + date + "_" + carcassNumber + ".jpg", quality=95)
 
     def renamePaths(self):
         for path in self.clickOrderPathList:
