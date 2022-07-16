@@ -4,6 +4,8 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 import os
 import pathlib, shutil
 import functools
+import piexif
+import datetime
 
 class Application(tk.Frame):
     def __init__(self, master = None):
@@ -337,7 +339,22 @@ class Application(tk.Frame):
         font = ImageFont.truetype("arial.ttf", 180)
         draw.text((self.imageWidth*(3/2) + self.panelXPadding - 90, self.imageHeight + self.panelYPadding), str(carcassNumber), (0, 0, 0), font=font)
         
-        dst.save(str(self.panelDir) + "\\" + date + "_" + carcassNumber + ".jpg", quality=95)
+        panelImageFileName = str(self.panelDir) + "\\" + date + "_" + carcassNumber + ".jpg"
+        dst.save(panelImageFileName, quality=95)
+        self.writeExifInfo(panelImageFileName, self.processCount)
+
+    def writeExifInfo(self, fileName, processCount):
+        exif = {}
+        now = datetime.datetime.now()
+        today = datetime.datetime(now.year, now.month, now.day, 0, 0, 0)
+        orderDelta = datetime.timedelta(minutes = int(processCount))
+        dateData = today + orderDelta
+        oth = {piexif.ImageIFD.DateTime: dateData.strftime('%Y:%m:%d %H:%M:%S').encode()}
+        exif["0th"] = oth
+
+        exif_bytes = piexif.dump(exif)
+        piexif.insert(exif_bytes, fileName)
+
 
     def renamePaths(self):
         for path in self.clickOrderPathList:
