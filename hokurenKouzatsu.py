@@ -330,7 +330,7 @@ class Application(tk.Frame):
             dst.paste(img, (img.width*hori + self.panelXPadding*(hori+1), img.height*ver + self.panelYPadding*(ver+1)))
 
         ushi = self.clickOrderPathList[0][0]
-        date = ushi[1]
+        date = ushi[1][:-6]
         carcassNumber = ushi[3]
 
         draw = ImageDraw.Draw(dst)
