@@ -42,6 +42,7 @@ class Application(tk.Frame):
         self.fourSortedDir = dirPath.parent / "MIJ-15(4枚整頓版)"
         self.sixSortedDir = dirPath.parent / "MIJ-15(6枚整頓版)"
         self.panelDir = dirPath.parent / "パネル画像"
+        self.analizeDir = dirPath.parent / "解析用"
 
         if not self.fourSortedDir.exists():
             self.fourSortedDir.mkdir()
@@ -51,6 +52,14 @@ class Application(tk.Frame):
 
         if not self.panelDir.exists():
             self.panelDir.mkdir()
+
+        if not self.analizeDir.exists():
+            self.analizeDir.mkdir()
+
+        for dirName in ["ロース芯", "サイコロ脂", "カブリ", "広背筋", "腹鋸筋"]:
+            dir = self.analizeDir / dirName
+            if not dir.exists():
+                dir.mkdir()
 
     def initFrameAndButtonSet(self):
         self.imageFrame = tk.Frame(
@@ -357,6 +366,8 @@ class Application(tk.Frame):
 
 
     def renamePaths(self):
+        orderToName = {1: ["ロース芯", "サイコロ脂"], 2: ["カブリ"], 3: None, 4: None, 5: ["広背筋"], 6: ["腹鋸筋"]}
+
         for path in self.clickOrderPathList:
             oriPath = path[0][0]
             order = path[2]
@@ -371,14 +382,19 @@ class Application(tk.Frame):
 
             nameFour = oriPath.stem
             nameSix = str(date) + "_" + str(carcassId) + "_" + str(indivNum) + "_" + str(order)
-
             sixPath = str(self.sixSortedDir) + "/" + nameSix + oriPath.suffix
 
             if order in [1, 2, 3, 4]:
                 fourPath = str(self.fourSortedDir) + "/" + nameFour + oriPath.suffix
                 shutil.copy(oriPath, fourPath)
-                
+
             shutil.copy(oriPath, sixPath)
+
+            if orderToName[order] != None:
+                for name in orderToName[order]:
+                    nameAnalize = str(date) + "_" + str(carcassId) + "_" + str(indivNum) + "_" + name
+                    analizePath = str(self.analizeDir) + "/" + name + "/" + nameAnalize + oriPath.suffix
+                    shutil.copy(oriPath, analizePath)
         
 if __name__ == "__main__":
     root = tk.Tk()
