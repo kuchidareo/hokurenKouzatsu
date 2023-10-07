@@ -233,7 +233,7 @@ class Application(tk.Frame):
         xPadding = 20
         yPadding = 20
         horiSet = 4
-        verSet = 2
+        verSet = 3
 
         displayImageWidth = int(self.winWidth * 4 / (5 * horiSet) - xPadding)
         displayImageHeight = int(19 * displayImageWidth / 22)
@@ -390,7 +390,7 @@ class Application(tk.Frame):
 
             shutil.copy(oriPath, sixPath)
 
-            if orderToName[order] != None:
+            if order in orderToName and orderToName[order] != None:
                 for name in orderToName[order]:
                     nameAnalize = str(date) + "_" + str(carcassId) + "_" + str(indivNum) + "_" + name
                     analizePath = str(self.analizeDir) + "/" + name + "/" + nameAnalize + oriPath.suffix
